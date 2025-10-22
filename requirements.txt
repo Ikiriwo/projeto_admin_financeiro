@@ -1,0 +1,8 @@
+flask==2.3.3
+flask-wtf==1.1.1
+flask-bootstrap==3.3.7.1
+Werkzeug==2.3.7
+google-generativeai
+PyPDF2
+flask-sqlalchemy==3.0.3
+psycopg2-binary==2.9.6

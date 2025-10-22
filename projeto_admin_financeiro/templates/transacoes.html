@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Transações{% endblock %}
+
+{% block content %}
+<h1>Gerenciamento de Transações</h1>
+
+<div class="row mb-4 mt-3">
+    <div class="col-md-6">
+        <a href="#" class="btn btn-success">Nova Receita</a>
+        <a href="#" class="btn btn-danger">Nova Despesa</a>
+    </div>
+    <div class="col-md-6">
+        <form class="d-flex">
+            <input class="form-control me-2" type="search" placeholder="Buscar transações" aria-label="Search">
+            <button class="btn btn-outline-primary" type="submit">Buscar</button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        Lista de Transações
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for transacao in transacoes %}
+                <tr>
+                    <td>{{ transacao.id }}</td>
+                    <td>{{ transacao.data }}</td>
+                    <td>{{ transacao.descricao }}</td>
+                    <td>
+                        {% if transacao.tipo == 'receita' %}
+                        <span class="badge bg-success">Receita</span>
+                        {% else %}
+                        <span class="badge bg-danger">Despesa</span>
+                        {% endif %}
+                    </td>
+                    <td>R$ {{ "%.2f"|format(transacao.valor) }}</td>
+                    <td>
+                        <a href="#" class="btn btn-sm btn-primary">Editar</a>
+                        <a href="#" class="btn btn-sm btn-danger">Excluir</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Dados extraídos da Nota Fiscal</h2>
+    
+    <!-- Abas para alternar entre visualizações -->
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('formatado')">Visualização Formatada</button>
+        <button class="tab-btn" onclick="showTab('json')">JSON</button>
+    </div>
+    
+    <!-- Conteúdo da aba formatada -->
+    <div id="formatado" class="tab-content active">
+        <div class="resultado">
+            <p><strong>Fornecedor:</strong> {{ resultado['Fornecedor']['Razao Social'] }} - CNPJ: {{ resultado['Fornecedor']['CNPJ'] }}</p>
+            <p><strong>Faturado:</strong> {{ resultado['Faturado']['Nome'] }} - CPF: {{ resultado['Faturado']['CPF'] }}</p>
+            <p><strong>Nota Fiscal:</strong> {{ resultado['Nota Fiscal'] }}</p>
+            <p><strong>Data de Emissão:</strong> {{ resultado['Data Emissao'] }}</p>
+            <p><strong>Produtos:</strong> {{ resultado['Descricao Produtos'] | join(", ") }}</p>
+            <p><strong>Valor Total:</strong> R$ {{ "%.2f"|format(resultado['Valor Total']) }}</p>
+            <p><strong>Classificação:</strong> {{ resultado['Classificacao Despesa'] }}</p>
+        </div>
+    </div>
+    
+    <!-- Conteúdo da aba JSON -->
+    <div id="json" class="tab-content">
+        <div class="json-container">
+            <div class="json-header">
+                <span>Dados em JSON</span>
+                <button class="copy-btn" onclick="copyJson()">Copiar JSON</button>
+            </div>
+            <pre class="json-code">{{ resultado_json }}</pre>
+            <p class="json-info">Este JSON contém todos os dados extraídos da nota fiscal e pode ser usado para integração com outros sistemas.</p>
+        </div>
+    </div>
+    
+    <!-- Feedback de validação automática -->
+    <div>
+        <span id="feedback-validacao" class="feedback-text"></span>
+    </div>
+
+    <!-- Seção de Validação e Consulta -->
+    <div id="validacao-section" class="card">
+        <div class="card-header">
+            <h3>Validação de Registros</h3>
+        </div>
+        <div class="card-body">
+            <div class="painel-grid">
+                <!-- Painel Fornecedor -->
+                <div class="painel">
+                    <div class="painel-header">
+                        <span class="painel-title">🏢 Fornecedor</span>
+                        <span id="status-fornecedor" class="status-badge">Aguardando...</span>
+                    </div>
+                    <div class="painel-body">
+                        <div class="campo"><strong>Razão Social:</strong> {{ resultado['Fornecedor']['Razao Social'] }}</div>
+                        <div class="campo"><strong>CNPJ:</strong> {{ resultado['Fornecedor']['CNPJ'] }}</div>
+                        <div class="campo"><strong>ID:</strong> <span id="id-fornecedor">—</span></div>
+                        <button id="btn-cadastrar-fornecedor" class="btn" style="display:none;">Cadastrar Novo</button>
+                    </div>
+                </div>
+
+                <!-- Painel Faturado -->
+                <div class="painel">
+                    <div class="painel-header">
+                        <span class="painel-title">👤 Faturado</span>
+                        <span id="status-faturado" class="status-badge">Aguardando...</span>
+                    </div>
+                    <div class="painel-body">
+                        <div class="campo"><strong>Nome:</strong> {{ resultado['Faturado']['Nome'] }}</div>
+                        <div class="campo"><strong>CPF:</strong> {{ resultado['Faturado']['CPF'] }}</div>
+                        <div class="campo"><strong>ID:</strong> <span id="id-faturado">—</span></div>
+                        <button id="btn-cadastrar-faturado" class="btn" style="display:none;">Cadastrar Novo</button>
+                    </div>
+                </div>
+
+                <!-- Painel Classificação / Despesa -->
+                <div class="painel">
+                    <div class="painel-header">
+                        <span class="painel-title">💰 Despesa</span>
+                        <span id="status-classificacao" class="status-badge">Aguardando...</span>
+                    </div>
+                    <div class="painel-body">
+                        <div class="campo"><strong>Classificação:</strong> {{ resultado['Classificacao Despesa'] }}</div>
+                        <div class="campo"><strong>ID:</strong> <span id="id-classificacao">—</span></div>
+                        <button id="btn-cadastrar-classificacao" class="btn" style="display:none;">Cadastrar Novo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seção de Itens da Nota -->
+    <div id="itens-section" class="card">
+        <div class="card-header">
+            <h3>Itens da Nota</h3>
+        </div>
+        <div class="card-body">
+            <table class="table-itens">
+                <thead>
+                    <tr>
+                        <th>Descrição</th>
+                        <th>Quantidade</th>
+                        <th>Valor Unitário</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in resultado['Descricao Produtos'] %}
+                    <tr>
+                        <td>{{ item }}</td>
+                        <td>—</td>
+                        <td>—</td>
+                        <td>—</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Resumo do Lançamento -->
+    <div id="resumo-section" class="card">
+        <div class="card-header">
+            <h3>Resumo do Lançamento</h3>
+        </div>
+        <div class="card-body resumo-info">
+            <p><strong>Fornecedor (ID):</strong> <span id="resumo-id-fornecedor">—</span></p>
+            <p><strong>Faturado (ID):</strong> <span id="resumo-id-faturado">—</span></p>
+            <p><strong>Classificação (ID):</strong> <span id="resumo-id-classificacao">—</span></p>
+            <p><strong>Valor Total:</strong> R$ {{ "%.2f"|format(resultado['Valor Total']) }}</p>
+            <p><strong>Data de Emissão:</strong> {{ resultado['Data Emissao'] }}</p>
+            <p><strong>Tipo:</strong> A PAGAR</p>
+            <button id="btn-confirmar" class="btn-primary" disabled>✅ Confirmar Lançamento no Sistema</button>
+            <span id="feedback-lancamento" class="feedback-text"></span>
+        </div>
+    </div>
+
+    <script>
+        // Dados extraídos disponíveis para o JS
+        window.dadosExtraidos = {{ resultado | tojson }};
+
+        // Validação automática ao carregar a página de resultados
+        document.getElementById('validacao-section').style.display = 'block';
+        document.getElementById('itens-section').style.display = 'block';
+        document.getElementById('resumo-section').style.display = 'block';
+        if (window.validarDados) {
+            window.validarDados(window.dadosExtraidos);
+        }
+        document.getElementById('btn-cadastrar-fornecedor').addEventListener('click', function() {
+            if (window.cadastrarFornecedor) {
+                window.cadastrarFornecedor(window.dadosExtraidos);
+            }
+        });
+        document.getElementById('btn-cadastrar-faturado').addEventListener('click', function() {
+            if (window.cadastrarFaturado) {
+                window.cadastrarFaturado(window.dadosExtraidos);
+            }
+        });
+        document.getElementById('btn-cadastrar-classificacao').addEventListener('click', function() {
+            if (window.cadastrarClassificacao) {
+                window.cadastrarClassificacao(window.dadosExtraidos);
+            }
+        });
+        document.getElementById('btn-confirmar').addEventListener('click', function() {
+            if (window.confirmarLancamento) {
+                window.confirmarLancamento(window.dadosExtraidos);
+            }
+        });
+    </script>
+
+    <a href="{{ url_for('index') }}" class="btn">Voltar</a>
+</div>
+
+<script>
+    function showTab(tabId) {
+        // Esconde todos os conteúdos de abas
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Remove a classe active de todos os botões
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Mostra o conteúdo da aba selecionada
+        document.getElementById(tabId).classList.add('active');
+        
+        // Adiciona a classe active ao botão clicado
+        event.target.classList.add('active');
+    }
+    
+    function copyJson() {
+        const jsonText = document.querySelector('.json-code').textContent;
+        navigator.clipboard.writeText(jsonText)
+            .then(() => {
+                alert('JSON copiado para a área de transferência!');
+            })
+            .catch(err => {
+                console.error('Erro ao copiar: ', err);
+            });
+    }
+</script>
+{% endblock %}

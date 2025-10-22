@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1>Dashboard Financeiro</h1>
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                Resumo Mensal
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="alert alert-success">
+                            <h5>Receitas</h5>
+                            <h3>R$ 3.000,00</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-danger">
+                            <h5>Despesas</h5>
+                            <h3>R$ 1.150,00</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <h5>Saldo</h5>
+                    <h3>R$ 1.850,00</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                Gráfico de Despesas por Categoria
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <!-- Aqui você pode adicionar um gráfico usando Chart.js ou outra biblioteca -->
+                    <p>Gráfico de despesas por categoria</p>
+                    <div style="height: 200px; background-color: #f8f9fa; display: flex; align-items: center; justify-content: center;">
+                        <p class="text-muted">Gráfico será exibido aqui</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                Últimas Transações
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Descrição</th>
+                            <th>Tipo</th>
+                            <th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>01/10/2023</td>
+                            <td>Salário</td>
+                            <td><span class="badge bg-success">Receita</span></td>
+                            <td>R$ 3.000,00</td>
+                        </tr>
+                        <tr>
+                            <td>05/10/2023</td>
+                            <td>Aluguel</td>
+                            <td><span class="badge bg-danger">Despesa</span></td>
+                            <td>R$ 800,00</td>
+                        </tr>
+                        <tr>
+                            <td>10/10/2023</td>
+                            <td>Supermercado</td>
+                            <td><span class="badge bg-danger">Despesa</span></td>
+                            <td>R$ 350,00</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <a href="{{ url_for('transacoes') }}" class="btn btn-primary">Ver todas as transações</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

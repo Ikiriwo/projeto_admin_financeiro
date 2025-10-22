@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Consultas / Banco de Dados</h2>
+        <p class="subtitle">Teste rápido dos endpoints</p>
+    </div>
+    <div class="card-body">
+        <div class="instructions">
+            <h3>Como usar</h3>
+            <ul>
+                <li>Preencha os campos e clique em "Consultar" para verificar a existência.</li>
+                <li>Consulte pessoas (Fornecedor/Faturado) por documento (CNPJ/CPF).</li>
+                <li>Consulte classificações por descrição.</li>
+            </ul>
+        </div>
+
+        <div class="painel">
+            <div class="painel-header">
+                <span class="painel-title">Pessoas</span>
+                <span id="status-consulta-pessoas" class="status-badge">Aguardando...</span>
+            </div>
+            <div class="painel-body">
+                <div class="campo">
+                    <label for="tipoPessoa">Tipo:</label>
+                    <select id="tipoPessoa">
+                        <option value="FORNECEDOR">FORNECEDOR</option>
+                        <option value="FATURADO">FATURADO</option>
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="docPessoa">Documento (CPF/CNPJ):</label>
+                    <input type="text" id="docPessoa" placeholder="Somente números" />
+                </div>
+                <button id="btn-consultar-pessoas" class="btn">Consultar</button>
+                <div class="campo"><strong>Resposta:</strong> <pre id="resp-consulta-pessoas"></pre></div>
+            </div>
+        </div>
+
+        <div class="painel" style="margin-top: 16px;">
+            <div class="painel-header">
+                <span class="painel-title">Classificação</span>
+                <span id="status-consulta-class" class="status-badge">Aguardando...</span>
+            </div>
+            <div class="painel-body">
+                <div class="campo">
+                    <label for="descClass">Descrição:</label>
+                    <input type="text" id="descClass" placeholder="Ex.: MANUTENCAO_E_OPERACAO" />
+                </div>
+                <button id="btn-consultar-class" class="btn">Consultar</button>
+                <div class="campo"><strong>Resposta:</strong> <pre id="resp-consulta-class"></pre></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function limparMascaraDocumento(doc) { return (doc || '').toString().replace(/\D/g, ''); }
+function setBadge(id, status) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('status-success', 'status-error');
+    if (status === 'success') { el.classList.add('status-success'); el.textContent = '✅ EXISTE'; }
+    else if (status === 'error') { el.classList.add('status-error'); el.textContent = '❌ NÃO EXISTE'; }
+    else { el.textContent = 'Aguardando...'; }
+}
+
+async function getJSON(url) {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) throw new Error('Falha: ' + res.status);
+    return await res.json();
+}
+
+document.getElementById('btn-consultar-pessoas').addEventListener('click', async () => {
+    const tipo = document.getElementById('tipoPessoa').value;
+    const doc = limparMascaraDocumento(document.getElementById('docPessoa').value);
+    try {
+        const resp = await getJSON(`/pessoas?tipo=${encodeURIComponent(tipo)}&documento=${encodeURIComponent(doc)}`);
+        setBadge('status-consulta-pessoas', resp.existe ? 'success' : 'error');
+        document.getElementById('resp-consulta-pessoas').textContent = JSON.stringify(resp, null, 2);
+    } catch (e) {
+        setBadge('status-consulta-pessoas', 'error');
+        document.getElementById('resp-consulta-pessoas').textContent = e.toString();
+    }
+});
+
+document.getElementById('btn-consultar-class').addEventListener('click', async () => {
+    const desc = document.getElementById('descClass').value;
+    try {
+        const resp = await getJSON(`/classificacao?descricao=${encodeURIComponent(desc)}`);
+        setBadge('status-consulta-class', resp.existe ? 'success' : 'error');
+        document.getElementById('resp-consulta-class').textContent = JSON.stringify(resp, null, 2);
+    } catch (e) {
+        setBadge('status-consulta-class', 'error');
+        document.getElementById('resp-consulta-class').textContent = e.toString();
+    }
+});
+</script>
+{% endblock %}
