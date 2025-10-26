@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="upload-container">
+    <div class="card">
+        <div class="card-header">
+            <h2>Upload de Nota Fiscal</h2>
+            <p class="subtitle">Sistema de Extração de Dados</p>
+        </div>
+        
+        <div class="card-body">
+            <div class="upload-icon">
+                <i class="icon-upload"></i>
+            </div>
+            
+            <div class="instructions">
+                <h3>Instruções</h3>
+                <ul>
+                    <li>Selecione um arquivo PDF de nota fiscal</li>
+                    <li>O sistema extrairá automaticamente os dados</li>
+                    <li>Verifique os resultados na próxima tela</li>
+                </ul>
+            </div>
+            
+            <form action="/processar" method="post" enctype="multipart/form-data" class="upload-form">
+                <div class="file-input-container">
+                    <label for="file" class="file-label">
+                        <span class="file-icon">📄</span>
+                        <span class="file-text">Selecione o PDF da Nota Fiscal</span>
+                    </label>
+                    <input type="file" name="file" id="file" accept="application/pdf" required class="file-input">
+                    <div class="file-name" id="file-name">Nenhum arquivo selecionado</div>
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <span class="btn-icon">⚡</span>
+                    Extrair Dados
+                </button>
+            </form>
+        </div>
+        
+        <div class="card-footer">
+            <p>Formatos suportados: PDF</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Script para mostrar o nome do arquivo selecionado
+    document.getElementById('file').addEventListener('change', function() {
+        var fileName = this.files[0] ? this.files[0].name : 'Nenhum arquivo selecionado';
+        document.getElementById('file-name').textContent = fileName;
+    });
+</script>
+{% endblock %}
