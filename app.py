@@ -11,21 +11,12 @@ app = Flask(__name__,
            static_folder='projeto_admin_financeiro/static')
 app.config['UPLOAD_FOLDER'] = 'uploads'
 
-# Configuração do PostgreSQL
-# Configuração do banco de dados para funcionar com banco de dados global
-# Prioriza a variável de ambiente DATABASE_URL para conexão com banco de dados global
-# Se não estiver definida, usa as configurações locais ou do Docker
 database_url = os.environ.get('DATABASE_URL')
 
 if database_url:
     # Usar a URL de banco de dados global fornecida
+    print(f"Usando banco de dados global: {database_url}")
     app.config['SQLALCHEMY_DATABASE_URI'] = database_url
-else:
-    # Configuração para ambiente local ou Docker
-    # Usando conexão SQLite para evitar problemas de codificação com PostgreSQL
-    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///admin_financeiro.db"
-app.config['SQLALCHEMY_ECHO'] = True  # Ativa logs SQL para debug
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Importação dos modelos
 from models import db, init_db

@@ -24,17 +24,7 @@ COPY projeto_admin_financeiro/templates/ /app/templates/
 # Expor a porta que o Flask vai usar
 EXPOSE 5000
 
-# Variáveis de ambiente para conexão com PostgreSQL
-ENV POSTGRES_HOST=db
-ENV POSTGRES_PORT=5432
-ENV POSTGRES_DB=admin_financeiro
-ENV POSTGRES_USER=postgres
-ENV POSTGRES_PASSWORD=postgres
-
-# Variáveis de ambiente para Flask
-ENV FLASK_APP=app.py
-ENV FLASK_ENV=development
-ENV PYTHONUNBUFFERED=1
+# As variáveis de ambiente agora são carregadas do arquivo .env
 
 # Comando para iniciar a aplicação
 CMD ["python", "app.py"]
