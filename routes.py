@@ -67,10 +67,7 @@ def validar_dados():
         'id': None
     }
     
-    # Verificar tanto 'Classificacao Despesa' quanto 'Classificacao_Despesa'
     classificacao_despesa = data.get('Classificacao_Despesa')
-    if not classificacao_despesa:
-        classificacao_despesa = data.get('Classificacao Despesa')
     
     print(f"Classificação Despesa: {classificacao_despesa}")  # Log para debug
     if classificacao_despesa:
@@ -133,7 +130,7 @@ def cadastrar_classificacao():
     
     classificacao = Classificacao.criar_nova(
         tipo='DESPESA',
-        descricao=data.get('Classificacao Despesa')
+        descricao=data.get('Classificacao_Despesa')
     )
     
     return jsonify({
@@ -191,7 +188,7 @@ def lancar_nota_fiscal():
         data_validade=datetime.now().date(),  # Data de validade não está disponível na interface
         valor_total=float(data.get('Valor Total')),
         quantidade_parcelas=1,
-        classificacao_despesa=data.get('Classificacao Despesa')
+        classificacao_despesa=data.get('Classificacao_Despesa')
     )
     
     db.session.add(nota_fiscal)

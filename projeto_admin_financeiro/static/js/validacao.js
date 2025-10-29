@@ -53,7 +53,7 @@ function validarDados(dadosExtraidos) {
             document.getElementById('status-classificacao').textContent = "Cadastrado";
             document.getElementById('status-classificacao').className = "status-badge status-ok";
             document.getElementById('id-classificacao').textContent = data.classificacao.id;
-            document.getElementById('resumo-id-classificacao').textContent = (dadosExtraidos["Classificacao Despesa"] || dadosExtraidos.Classificacao_Despesa || "") + " (ID: " + data.classificacao.id + ")";
+            document.getElementById('resumo-id-classificacao').textContent = (dadosExtraidos["Classificacao_Despesa"] || dadosExtraidos.Classificacao_Despesa || "") + " (ID: " + data.classificacao.id + ")";
         } else {
             document.getElementById('status-classificacao').textContent = "Não Cadastrado";
             document.getElementById('status-classificacao').className = "status-badge status-pendente";
@@ -156,7 +156,7 @@ function cadastrarClassificacao(dadosExtraidos) {
             document.getElementById('status-classificacao').textContent = "Cadastrado";
             document.getElementById('status-classificacao').className = "status-badge status-ok";
             document.getElementById('id-classificacao').textContent = data.id;
-            document.getElementById('resumo-id-classificacao').textContent = (dadosExtraidos["Classificacao Despesa"] || dadosExtraidos.Classificacao_Despesa || "") + " (ID: " + data.id + ")";
+            document.getElementById('resumo-id-classificacao').textContent = (dadosExtraidos["Classificacao_Despesa"] || dadosExtraidos.Classificacao_Despesa || "") + " (ID: " + data.id + ")";
             document.getElementById('btn-cadastrar-classificacao').style.display = "none";
             
             // Verificar se todos os itens estão cadastrados

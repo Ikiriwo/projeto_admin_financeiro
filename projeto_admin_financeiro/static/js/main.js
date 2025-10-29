@@ -118,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Classificação
-            const classDesc = dados['Classificacao Despesa'] || dados['Classificacao_Despesa'] || '';
+            const classDesc = dados['Classificacao_Despesa'] || dados['Classificacao_Despesa'] || '';
             const classQuery = `/classificacao?descricao=${encodeURIComponent(classDesc)}`;
             const classResp = await getJSON(classQuery);
             if (classResp.existe) {
@@ -187,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.cadastrarClassificacao = async function(dados) {
-        const classDesc = dados['Classificacao Despesa'] || dados['Classificacao_Despesa'] || '';
+        const classDesc = dados['Classificacao_Despesa'] || dados['Classificacao_Despesa'] || '';
         const feedbackEl = qs('#feedback-validacao');
         try {
             const resp = await postJSON('/classificacao', {

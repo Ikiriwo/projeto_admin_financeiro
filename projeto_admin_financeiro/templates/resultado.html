@@ -18,7 +18,7 @@
             <p><strong>Data de Emissão:</strong> {{ resultado['Data Emissao'] }}</p>
             <p><strong>Produtos:</strong> {{ resultado['Descricao Produtos'] | join(", ") }}</p>
             <p><strong>Valor Total:</strong> R$ {{ "%.2f"|format(resultado['Valor Total']) }}</p>
-            <p><strong>Classificação:</strong> {{ resultado['Classificacao Despesa'] }}</p>
+            <p><strong>Classificação:</strong> {{ resultado['Classificacao_Despesa'] }}</p>
         </div>
     </div>
     
@@ -81,7 +81,7 @@
                         <span id="status-classificacao" class="status-badge">Aguardando...</span>
                     </div>
                     <div class="painel-body">
-                        <div class="campo"><strong>Classificação:</strong> {{ resultado['Classificacao Despesa'] }}</div>
+                        <div class="campo"><strong>Classificação:</strong> {{ resultado['Classificacao_Despesa'] }}</div>
                         <div class="campo"><strong>ID:</strong> <span id="id-classificacao">—</span></div>
                         <button id="btn-cadastrar-classificacao" class="btn" style="display:none;">Cadastrar Novo</button>
                     </div>
@@ -100,18 +100,12 @@
                 <thead>
                     <tr>
                         <th>Descrição</th>
-                        <th>Quantidade</th>
-                        <th>Valor Unitário</th>
-                        <th>Valor Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in resultado['Descricao Produtos'] %}
                     <tr>
                         <td>{{ item }}</td>
-                        <td>—</td>
-                        <td>—</td>
-                        <td>—</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -137,24 +131,23 @@
     </div>
     
     <script>
-        // Forçar habilitação do botão para teste
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('btn-confirmar').disabled = false;
-        });
-    </script>
-
-    <script>
         // Dados extraídos disponíveis para o JS
         var dadosJSON = {{ resultado | tojson | safe }};
         window.dadosExtraidos = dadosJSON;
 
         // Validação automática ao carregar a página de resultados
-        document.getElementById('validacao-section').style.display = 'block';
-        document.getElementById('itens-section').style.display = 'block';
-        document.getElementById('resumo-section').style.display = 'block';
-        if (window.validarDados) {
-            window.validarDados(window.dadosExtraidos);
-        }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('validacao-section').style.display = 'block';
+            document.getElementById('itens-section').style.display = 'block';
+            document.getElementById('resumo-section').style.display = 'block';
+            
+            // Iniciar validação explicitamente
+            if (typeof validarDados === 'function') {
+                validarDados(window.dadosExtraidos);
+            } else {
+                console.error('Função validarDados não encontrada');
+            }
+        });
         document.getElementById('btn-cadastrar-fornecedor').addEventListener('click', function() {
             if (window.cadastrarFornecedor) {
                 window.cadastrarFornecedor(window.dadosExtraidos);
