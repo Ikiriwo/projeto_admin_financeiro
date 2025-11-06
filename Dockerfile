@@ -19,7 +19,9 @@ RUN mkdir -p uploads templates
 COPY . .
 
 # Copiar os templates para o diretório correto
-COPY projeto_admin_financeiro/templates/ /app/templates/
+COPY templates/ /app/templates/
+# Copiar os arquivos estáticos para o diretório correto
+COPY static/ /app/static/
 
 # Expor a porta que o Flask vai usar
 EXPOSE 5000

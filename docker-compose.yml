@@ -8,8 +8,8 @@ services:
     volumes:
       - .:/app
       - ./uploads:/app/uploads
-      - ./projeto_admin_financeiro/templates:/app/templates
-      - ./projeto_admin_financeiro/static:/app/static
+      - ./templates:/app/templates
+      - ./static:/app/static
     depends_on:
       - db
     env_file:

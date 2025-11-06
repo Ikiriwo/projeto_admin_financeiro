@@ -44,11 +44,5 @@
     </div>
 </div>
 
-<script>
-    // Script para mostrar o nome do arquivo selecionado
-    document.getElementById('file').addEventListener('change', function() {
-        var fileName = this.files[0] ? this.files[0].name : 'Nenhum arquivo selecionado';
-        document.getElementById('file-name').textContent = fileName;
-    });
-</script>
+<script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

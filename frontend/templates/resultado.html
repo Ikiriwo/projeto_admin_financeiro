@@ -129,78 +129,14 @@
             <span id="feedback-lancamento" class="feedback-text"></span>
         </div>
     </div>
-    
+
     <script>
         // Dados extraídos disponíveis para o JS
         var dadosJSON = {{ resultado | tojson | safe }};
         window.dadosExtraidos = dadosJSON;
-
-        // Validação automática ao carregar a página de resultados
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('validacao-section').style.display = 'block';
-            document.getElementById('itens-section').style.display = 'block';
-            document.getElementById('resumo-section').style.display = 'block';
-            
-            // Iniciar validação explicitamente
-            if (typeof validarDados === 'function') {
-                validarDados(window.dadosExtraidos);
-            } else {
-                console.error('Função validarDados não encontrada');
-            }
-        });
-        document.getElementById('btn-cadastrar-fornecedor').addEventListener('click', function() {
-            if (window.cadastrarFornecedor) {
-                window.cadastrarFornecedor(window.dadosExtraidos);
-            }
-        });
-        document.getElementById('btn-cadastrar-faturado').addEventListener('click', function() {
-            if (window.cadastrarFaturado) {
-                window.cadastrarFaturado(window.dadosExtraidos);
-            }
-        });
-        document.getElementById('btn-cadastrar-classificacao').addEventListener('click', function() {
-            if (window.cadastrarClassificacao) {
-                window.cadastrarClassificacao(window.dadosExtraidos);
-            }
-        });
-        document.getElementById('btn-confirmar').addEventListener('click', function() {
-            if (window.confirmarLancamento) {
-                window.confirmarLancamento(window.dadosExtraidos);
-            }
-        });
     </script>
+    <script src="{{ url_for('static', filename='js/resultado.js') }}"></script>
 
-    <a href="{{ url_for('index') }}" class="btn">Voltar</a>
+    <a href="{{ url_for('web.index') }}" class="btn">Voltar</a>
 </div>
-
-<script>
-    function showTab(tabId) {
-        // Esconde todos os conteúdos de abas
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        
-        // Remove a classe active de todos os botões
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Mostra o conteúdo da aba selecionada
-        document.getElementById(tabId).classList.add('active');
-        
-        // Adiciona a classe active ao botão clicado
-        event.target.classList.add('active');
-    }
-    
-    function copyJson() {
-        const jsonText = document.querySelector('.json-code').textContent;
-        navigator.clipboard.writeText(jsonText)
-            .then(() => {
-                alert('JSON copiado para a área de transferência!');
-            })
-            .catch(err => {
-                console.error('Erro ao copiar: ', err);
-            });
-    }
-</script>
 {% endblock %}
