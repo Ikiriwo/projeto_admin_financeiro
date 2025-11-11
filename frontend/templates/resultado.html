@@ -1,13 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="card">
-    <h2>Dados extraídos da Nota Fiscal</h2>
-    
-    <!-- Abas para alternar entre visualizações -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('formatado')">Visualização Formatada</button>
-        <button class="tab-btn" onclick="showTab('json')">JSON</button>
+    <div class="card-header">
+        <h2>Dados Extraídos da Nota Fiscal</h2>
+        <p class="subtitle">Visualize os dados extraídos e confirme o lançamento</p>
     </div>
+
+    <div class="card-body">
+        <!-- Abas para alternar entre visualizações -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('formatado')">Visualização Formatada</button>
+            <button class="tab-btn" onclick="showTab('json')">JSON</button>
+        </div>
     
     <!-- Conteúdo da aba formatada -->
     <div id="formatado" class="tab-content active">
@@ -34,13 +38,15 @@
         </div>
     </div>
     
-    <!-- Feedback de validação automática -->
-    <div>
-        <span id="feedback-validacao" class="feedback-text"></span>
+        <!-- Feedback de validação automática -->
+        <div>
+            <span id="feedback-validacao" class="feedback-text"></span>
+        </div>
     </div>
+</div>
 
-    <!-- Seção de Validação e Consulta -->
-    <div id="validacao-section" class="card">
+<!-- Seção de Validação e Consulta -->
+<div id="validacao-section" class="card">
         <div class="card-header">
             <h3>Validação de Registros</h3>
         </div>
@@ -130,13 +136,12 @@
         </div>
     </div>
 
-    <script>
-        // Dados extraídos disponíveis para o JS
-        var dadosJSON = {{ resultado | tojson | safe }};
-        window.dadosExtraidos = dadosJSON;
-    </script>
-    <script src="{{ url_for('static', filename='js/resultado.js') }}"></script>
 
-    <a href="{{ url_for('web.index') }}" class="btn">Voltar</a>
-</div>
+<script>
+    // Dados extraídos disponíveis para o JS
+    var dadosJSON = {{ resultado | tojson | safe }};
+    window.dadosExtraidos = dadosJSON;
+</script>
+<script src="{{ url_for('static', filename='js/resultado.js') }}"></script>
+
 {% endblock %}
