@@ -1,0 +1,463 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="rag-container">
+    <div class="page-header">
+        <h2>Consulta Inteligente - Sistema RAG</h2>
+        <p class="subtitle">Faça perguntas sobre seus dados financeiros e receba respostas elaboradas por IA</p>
+    </div>
+
+    <div class="rag-nav">
+        <a href="/" class="btn-nav">Início</a>
+        <a href="/consultas" class="btn-nav">Consultas</a>
+        <a href="/rag" class="btn-nav active">RAG Inteligente</a>
+    </div>
+
+    <div class="rag-status-bar" id="statusBar">
+        <div class="status-item">
+            <span class="status-label">Status:</span>
+            <span class="status-value" id="statusValue">Carregando...</span>
+        </div>
+        <div class="status-item">
+            <span class="status-label">Documentos Indexados:</span>
+            <span class="status-value" id="indexedCount">-</span>
+        </div>
+        <button id="indexButton" class="btn-index" style="display: none;">
+            Indexar Documentos
+        </button>
+    </div>
+
+    <div class="rag-methods">
+        <h3>Método de Busca:</h3>
+        <div class="method-selector">
+            <label class="method-option">
+                <input type="radio" name="method" value="simple" checked>
+                <span class="method-label">
+                    <strong>RAG Simples</strong>
+                    <small>Busca direta no banco de dados com SQL + LLM</small>
+                </span>
+            </label>
+            <label class="method-option">
+                <input type="radio" name="method" value="embeddings" id="embeddingsRadio">
+                <span class="method-label">
+                    <strong>RAG com Embeddings</strong>
+                    <small>Busca semântica usando vetorização</small>
+                </span>
+            </label>
+        </div>
+    </div>
+
+    <div class="rag-input-section">
+        <h3>Sua Pergunta:</h3>
+        <div class="input-container">
+            <textarea
+                id="questionInput"
+                placeholder="Digite sua pergunta aqui... Ex: Qual o total de despesas dos últimos 30 dias?"
+                rows="4"
+            ></textarea>
+            <button id="askButton" class="btn-primary">
+                <span class="btn-icon">🤖</span>
+                Perguntar
+            </button>
+        </div>
+    </div>
+
+    <div class="rag-examples">
+        <h3>Exemplos de Perguntas:</h3>
+        <div id="examplesList" class="examples-grid">
+            <div class="loading">Carregando exemplos...</div>
+        </div>
+    </div>
+
+    <div class="rag-response-section" id="responseSection" style="display: none;">
+        <div class="response-header">
+            <h3>Resposta:</h3>
+            <span class="response-method" id="responseMethod"></span>
+        </div>
+        <div class="response-content" id="responseContent">
+            <!-- Resposta será inserida aqui -->
+        </div>
+        <div class="response-metadata" id="responseMetadata" style="display: none;">
+            <details>
+                <summary>Detalhes Técnicos</summary>
+                <pre id="metadataContent"></pre>
+            </details>
+        </div>
+    </div>
+
+    <div class="rag-loading" id="loadingIndicator" style="display: none;">
+        <div class="spinner"></div>
+        <p>Processando sua pergunta com IA...</p>
+    </div>
+
+    <div class="rag-error" id="errorSection" style="display: none;">
+        <div class="error-icon">⚠️</div>
+        <div class="error-message" id="errorMessage"></div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/rag.js') }}"></script>
+
+<style>
+.rag-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+}
+
+.page-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 2em;
+}
+
+.subtitle {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 1.1em;
+}
+
+.rag-nav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+}
+
+.btn-nav {
+    padding: 10px 20px;
+    background: #f0f0f0;
+    color: #333;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: all 0.3s;
+}
+
+.btn-nav:hover {
+    background: #e0e0e0;
+}
+
+.btn-nav.active {
+    background: #667eea;
+    color: white;
+}
+
+.rag-methods {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.method-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.method-option {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.method-option:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.method-option input[type="radio"] {
+    margin-right: 10px;
+    margin-top: 5px;
+}
+
+.method-option input[type="radio"]:checked + .method-label {
+    color: #667eea;
+}
+
+.method-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.method-label strong {
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.method-label small {
+    color: #666;
+}
+
+.rag-input-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+#questionInput {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1em;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s;
+}
+
+#questionInput:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.btn-primary {
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    align-self: flex-start;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+.btn-icon {
+    font-size: 1.3em;
+}
+
+.rag-examples {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.examples-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.example-item {
+    padding: 12px;
+    background: #f8f9ff;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.example-item:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.rag-response-section {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.response-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.response-method {
+    padding: 5px 15px;
+    background: #667eea;
+    color: white;
+    border-radius: 20px;
+    font-size: 0.9em;
+}
+
+.response-content {
+    padding: 15px;
+    background: #f8f9ff;
+    border-left: 4px solid #667eea;
+    border-radius: 5px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.response-metadata {
+    margin-top: 15px;
+}
+
+.response-metadata details {
+    cursor: pointer;
+}
+
+.response-metadata summary {
+    padding: 10px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.response-metadata pre {
+    margin-top: 10px;
+    padding: 15px;
+    background: #f8f8f8;
+    border-radius: 5px;
+    overflow-x: auto;
+    font-size: 0.9em;
+}
+
+.rag-loading {
+    text-align: center;
+    padding: 40px;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.rag-error {
+    background: #ffe0e0;
+    padding: 20px;
+    border-radius: 10px;
+    border-left: 4px solid #ff4444;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.error-icon {
+    font-size: 2em;
+}
+
+.error-message {
+    flex: 1;
+    color: #cc0000;
+}
+
+.loading {
+    text-align: center;
+    color: #666;
+    padding: 20px;
+}
+
+.rag-status-bar {
+    background: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-label {
+    font-weight: bold;
+    color: #666;
+}
+
+.status-value {
+    padding: 5px 15px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    font-family: monospace;
+}
+
+.status-value.online {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-value.offline {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.btn-index {
+    padding: 8px 20px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: all 0.3s;
+}
+
+.btn-index:hover {
+    background: #218838;
+}
+
+.btn-index:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+</style>
+{% endblock %}

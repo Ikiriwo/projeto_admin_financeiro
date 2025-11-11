@@ -87,6 +87,12 @@ def consultas():
     return render_template('consultas.html', title="Consultas / Banco de Dados", notas_fiscais=notas_fiscais)
 
 
+@web_bp.route('/rag')
+def rag_interface():
+    """Página de interface RAG para perguntas inteligentes."""
+    return render_template('rag.html', title="Consulta Inteligente - RAG")
+
+
 @web_bp.route('/processar', methods=['POST'])
 def processar():
     """Processa o PDF da nota fiscal e extrai os dados."""

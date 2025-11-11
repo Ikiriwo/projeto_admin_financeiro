@@ -2,8 +2,12 @@
 Aplicação principal Flask para processamento de notas fiscais.
 """
 import os
+from dotenv import load_dotenv
 from flask import Flask
 import google.generativeai as genai
+
+# Carrega variáveis de ambiente do arquivo .env
+load_dotenv()
 
 # Importações dos modelos
 from models import db, init_db
@@ -11,9 +15,9 @@ from models import db, init_db
 # Importações das rotas
 from routes import api_bp, web_bp
 
-# Configuração da API Gemini
-GEMINI_API_KEY = "AIzaSyC20cwc-Evxal4LLJo5lsiHpCnT_13VeIg"
-GEMINI_MODEL = 'gemini-2.0-flash'
+# Configuração da API Gemini (agora vem do .env)
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
 
 
 def create_app():
@@ -32,6 +36,11 @@ def create_app():
 
     # Inicialização do banco de dados
     init_db(app)
+
+    # Inicializar sistema RAG
+    from routes.api_routes import init_rag_system
+    with app.app_context():
+        init_rag_system(db)
 
     # Registro das rotas
     app.register_blueprint(api_bp)

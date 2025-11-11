@@ -8,8 +8,29 @@ from models.parcelas_contas import ParcelasContas
 from models.movimento_contas import MovimentoContas
 from models.nota_fiscal import NotaFiscal, ProdutoNotaFiscal
 from datetime import datetime
+from models import db
+from rag_system import RAGSimple, RAGEmbeddings
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
+
+# Inicializar o sistema RAG (será configurado depois da inicialização do app)
+rag_simple = None
+rag_embeddings = None
+
+
+def init_rag_system(database):
+    """Inicializa o sistema RAG com a instância do banco de dados."""
+    global rag_simple, rag_embeddings
+    rag_simple = RAGSimple(database)
+
+    # Inicializa RAG com embeddings (pode demorar devido ao carregamento do modelo)
+    try:
+        print("Inicializando RAG com Embeddings...")
+        rag_embeddings = RAGEmbeddings(database)
+        print("RAG com Embeddings inicializado com sucesso!")
+    except Exception as e:
+        print(f"Erro ao inicializar RAG com Embeddings: {e}")
+        rag_embeddings = None
 
 
 @api_bp.route('/validar', methods=['POST'])
@@ -218,3 +239,163 @@ def lancar_nota_fiscal():
         'nota_fiscal_id': nota_fiscal.id,
         'movimento_id': movimento.id
     })
+
+
+# ==================== ROTAS DO SISTEMA RAG ====================
+
+@api_bp.route('/rag/ask', methods=['POST'])
+def rag_ask_question():
+    """
+    Endpoint para fazer perguntas ao sistema RAG.
+
+    Recebe uma pergunta em JSON e retorna uma resposta elaborada.
+    Suporta dois métodos: RAG_SIMPLE e RAG_EMBEDDINGS
+    """
+    try:
+        data = request.json
+        question = data.get('question', '').strip()
+        method = data.get('method', 'simple').lower()  # 'simple' ou 'embeddings'
+
+        if not question:
+            return jsonify({
+                'success': False,
+                'error': 'Pergunta não pode estar vazia'
+            }), 400
+
+        # Por enquanto, apenas RAG Simple está implementado
+        if method == 'simple':
+            if rag_simple is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'Sistema RAG não inicializado'
+                }), 500
+
+            result = rag_simple.answer_question(question)
+            return jsonify(result)
+
+        elif method == 'embeddings':
+            if rag_embeddings is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'RAG com embeddings não inicializado. Verifique os logs do servidor.'
+                }), 500
+
+            result = rag_embeddings.answer_question(question)
+            return jsonify(result)
+
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Método inválido. Use "simple" ou "embeddings"'
+            }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao processar pergunta: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/rag/examples', methods=['GET'])
+def rag_get_examples():
+    """
+    Retorna exemplos de perguntas que o sistema RAG pode responder.
+    """
+    try:
+        if rag_simple is None:
+            return jsonify({
+                'success': False,
+                'error': 'Sistema RAG não inicializado'
+            }), 500
+
+        examples = rag_simple.get_available_queries()
+
+        return jsonify({
+            'success': True,
+            'examples': examples,
+            'methods': ['simple', 'embeddings']
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao obter exemplos: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/rag/status', methods=['GET'])
+def rag_get_status():
+    """
+    Retorna o status do sistema RAG.
+    """
+    status = {
+        'success': True,
+        'rag_simple_initialized': rag_simple is not None,
+        'rag_embeddings_initialized': rag_embeddings is not None,
+        'available_methods': []
+    }
+
+    if rag_simple is not None:
+        status['available_methods'].append('simple')
+
+    if rag_embeddings is not None:
+        status['available_methods'].append('embeddings')
+        # Adiciona status da indexação
+        index_status = rag_embeddings.get_index_status()
+        status['index_status'] = index_status
+
+    return jsonify(status)
+
+
+@api_bp.route('/rag/index', methods=['POST'])
+def rag_index_documents():
+    """
+    Indexa todos os documentos (notas fiscais) para busca semântica.
+    """
+    try:
+        if rag_embeddings is None:
+            return jsonify({
+                'success': False,
+                'error': 'RAG com embeddings não inicializado'
+            }), 500
+
+        result = rag_embeddings.index_all_notas_fiscais()
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao indexar documentos: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/rag/index/<int:nota_id>', methods=['POST'])
+def rag_index_nota(nota_id):
+    """
+    Indexa uma nota fiscal específica.
+    """
+    try:
+        if rag_embeddings is None:
+            return jsonify({
+                'success': False,
+                'error': 'RAG com embeddings não inicializado'
+            }), 500
+
+        success = rag_embeddings.index_nota_fiscal(nota_id)
+
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'Nota fiscal {nota_id} indexada com sucesso'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'Erro ao indexar nota fiscal {nota_id}'
+            }), 400
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao indexar nota fiscal: {str(e)}'
+        }), 500

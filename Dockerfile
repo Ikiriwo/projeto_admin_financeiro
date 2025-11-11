@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -10,18 +10,13 @@ RUN apt-get update && apt-get install -y \
 
 # Copiar requirements e instalar dependências Python
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # Criar diretório de uploads e templates
 RUN mkdir -p uploads templates
 
 # Copiar o código da aplicação
 COPY . .
-
-# Copiar os templates para o diretório correto
-COPY templates/ /app/templates/
-# Copiar os arquivos estáticos para o diretório correto
-COPY static/ /app/static/
 
 # Expor a porta que o Flask vai usar
 EXPOSE 5000

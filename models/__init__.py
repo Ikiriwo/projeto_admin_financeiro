@@ -8,6 +8,7 @@ from . import classificacao
 from . import parcelas_contas
 from . import movimento_contas
 from . import nota_fiscal
+from . import document_embeddings
 
 def init_db(app):
     db.init_app(app)
