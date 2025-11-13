@@ -29,7 +29,6 @@ pip install -r requirements.txt
 ```
 
 As dependências do RAG incluem:
-- `sentence-transformers>=2.2.0` - Para geração de embeddings
 - `pgvector>=0.2.0` - Extensão PostgreSQL para vetores (opcional)
 - `python-dotenv>=1.0.0` - Para carregar variáveis de ambiente
 
@@ -226,7 +225,6 @@ frontend/
 
 ## Referências
 
-- [Sentence Transformers](https://www.sbert.net/)
 - [Google Gemini API](https://ai.google.dev/)
 - [RAG Pattern](https://python.langchain.com/docs/use_cases/question_answering/)
 - [pgvector](https://github.com/pgvector/pgvector)
