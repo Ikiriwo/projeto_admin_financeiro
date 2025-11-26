@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuração Inicial - Sistema Financeiro</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .setup-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 90%;
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .setup-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .setup-header h1 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .setup-header p {
+            color: #6c757d;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+        .warning-box i {
+            color: #ffc107;
+            margin-right: 10px;
+        }
+        .info-box {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+        .info-box i {
+            color: #17a2b8;
+            margin-right: 10px;
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .btn-validate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 12px 30px;
+            border-radius: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-validate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-validate:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .spinner-border-sm {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.15em;
+        }
+        .alert {
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .steps {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .steps ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .steps li {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+        .steps a {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .key-preview {
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+        .security-note {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin-top: 25px;
+            border-radius: 5px;
+        }
+        .security-note i {
+            color: #28a745;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <h1><i class="fas fa-cog"></i> Configuração Inicial</h1>
+            <p>Configure sua chave API do Google Gemini</p>
+        </div>
+
+        <div class="warning-box">
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Atenção:</strong> O sistema precisa de uma chave API do Google Gemini para funcionar.
+        </div>
+
+        <div class="info-box">
+            <i class="fas fa-info-circle"></i>
+            <strong>Primeira vez usando?</strong> Não se preocupe! Vamos te guiar passo a passo.
+        </div>
+
+        <form id="setupForm">
+            <div class="form-group">
+                <label for="apiKey">
+                    <i class="fas fa-key"></i> Chave API do Google Gemini *
+                </label>
+                <input type="text"
+                       class="form-control"
+                       id="apiKey"
+                       placeholder="Cole sua chave API aqui (ex: AIzaSy...)"
+                       required
+                       autocomplete="off">
+                <small class="form-text text-muted">
+                    A chave será salva localmente no servidor e não será compartilhada.
+                </small>
+                <div class="key-preview" id="keyPreview"></div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <button type="submit" class="btn btn-validate btn-block" id="validateBtn">
+                <i class="fas fa-check-circle"></i> Validar e Salvar Chave
+            </button>
+        </form>
+
+        <div class="steps">
+            <h5><i class="fas fa-list-ol"></i> Como obter sua chave API:</h5>
+            <ol>
+                <li>Acesse <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio <i class="fas fa-external-link-alt"></i></a></li>
+                <li>Faça login com sua conta Google</li>
+                <li>Clique em <strong>"Create API Key"</strong></li>
+                <li>Copie a chave gerada</li>
+                <li>Cole acima e clique em "Validar e Salvar"</li>
+            </ol>
+        </div>
+
+        <div class="security-note">
+            <i class="fas fa-shield-alt"></i>
+            <strong>Segurança:</strong> Sua chave é armazenada apenas localmente no arquivo <code>.env</code> do servidor.
+            Este arquivo não é sincronizado com o Git e permanece privado.
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Preview da chave (mascarada)
+        $('#apiKey').on('input', function() {
+            const key = $(this).val();
+            const preview = $('#keyPreview');
+
+            if (key.length > 10) {
+                const masked = key.substring(0, 8) + '...' + key.substring(key.length - 4);
+                preview.text('Preview: ' + masked).fadeIn();
+            } else {
+                preview.fadeOut();
+            }
+        });
+
+        // Validação e envio do formulário
+        $('#setupForm').on('submit', function(e) {
+            e.preventDefault();
+
+            const apiKey = $('#apiKey').val().trim();
+            const btn = $('#validateBtn');
+            const alertContainer = $('#alertContainer');
+
+            // Validação básica
+            if (apiKey.length < 20) {
+                showAlert('danger', 'A chave API parece muito curta. Verifique se copiou corretamente.');
+                return;
+            }
+
+            // Desabilitar botão e mostrar loading
+            btn.prop('disabled', true);
+            btn.html('<span class="spinner-border spinner-border-sm"></span> Validando...');
+
+            // Enviar para o servidor
+            $.ajax({
+                url: '/setup/validate',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ api_key: apiKey }),
+                success: function(response) {
+                    if (response.success) {
+                        showAlert('success',
+                            '<i class="fas fa-check-circle"></i> <strong>Sucesso!</strong> ' +
+                            'Chave validada e salva. Redirecionando...'
+                        );
+
+                        // Redirecionar após 2 segundos
+                        setTimeout(function() {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        showAlert('danger',
+                            '<i class="fas fa-times-circle"></i> <strong>Erro:</strong> ' +
+                            (response.error || 'Não foi possível validar a chave.')
+                        );
+                        btn.prop('disabled', false);
+                        btn.html('<i class="fas fa-check-circle"></i> Validar e Salvar Chave');
+                    }
+                },
+                error: function(xhr) {
+                    let errorMsg = 'Erro ao conectar com o servidor.';
+
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    }
+
+                    showAlert('danger',
+                        '<i class="fas fa-times-circle"></i> <strong>Erro:</strong> ' + errorMsg
+                    );
+                    btn.prop('disabled', false);
+                    btn.html('<i class="fas fa-check-circle"></i> Validar e Salvar Chave');
+                }
+            });
+        });
+
+        function showAlert(type, message) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            $('#alertContainer').html(alertHtml);
+        }
+
+        // Adicionar classe de foco visual
+        $('#apiKey').on('focus', function() {
+            $(this).parent().addClass('focused');
+        }).on('blur', function() {
+            $(this).parent().removeClass('focused');
+        });
+    </script>
+</body>
+</html>

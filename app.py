@@ -3,7 +3,7 @@ Aplicação principal Flask para processamento de notas fiscais.
 """
 import os
 from dotenv import load_dotenv
-from flask import Flask
+from flask import Flask, redirect, url_for, request
 import google.generativeai as genai
 
 # Carrega variáveis de ambiente do arquivo .env
@@ -18,6 +18,12 @@ from routes import api_bp, web_bp
 # Configuração da API Gemini (agora vem do .env)
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 GEMINI_MODEL = os.environ.get('GEMINI_MODEL', 'gemini-2.0-flash')
+
+
+def check_api_key():
+    """Verifica se a chave API está configurada."""
+    api_key = os.environ.get('GEMINI_API_KEY')
+    return bool(api_key and api_key not in ['sua_chave_api_aqui', '', 'YOUR_API_KEY_HERE'])
 
 
 def create_app():
@@ -37,14 +43,44 @@ def create_app():
     # Inicialização do banco de dados
     init_db(app)
 
-    # Inicializar sistema RAG
-    from routes.api_routes import init_rag_system
-    with app.app_context():
-        init_rag_system(db)
+    # Registro das rotas de setup ANTES de tudo
+    from routes.setup_routes import setup_bp
+    app.register_blueprint(setup_bp)
 
-    # Registro das rotas
+    # Middleware removido: Agora mostramos avisos contextuais ao invés de redirecionar
+    # O usuário pode navegar livremente e verá avisos nas páginas que precisam da API
+
+    # Inicializar sistema RAG (apenas se chave estiver configurada)
+    if check_api_key():
+        from routes.api_routes import init_rag_system
+        with app.app_context():
+            init_rag_system(db)
+
+    # Registro das outras rotas
     app.register_blueprint(api_bp)
     app.register_blueprint(web_bp)
+
+    # Popular banco de dados automaticamente se estiver vazio
+    with app.app_context():
+        try:
+            from sqlalchemy import text
+            # Verificar se o banco está vazio
+            count = db.session.execute(text("SELECT COUNT(*) FROM pessoas")).scalar()
+            if count == 0:
+                print("=" * 70)
+                print("🔄 Banco de dados vazio. Populando automaticamente...")
+                print("=" * 70)
+                import sys
+                from pathlib import Path
+                sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
+                from populate_database import populate_database
+                success, message, stats = populate_database(clear_first=False)
+                if success:
+                    print(f"✅ {message}")
+                else:
+                    print(f"⚠️  Aviso: {message}")
+        except Exception as e:
+            print(f"⚠️  Aviso ao verificar/popular banco: {e}")
 
     return app
 

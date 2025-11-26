@@ -17,6 +17,7 @@ class MovimentoContas(db.Model):
     fornecedor_cliente_id = db.Column(db.Integer, db.ForeignKey('pessoas.id'))
     faturado_id = db.Column(db.Integer, db.ForeignKey('pessoas.id'))
     valor = db.Column(db.Float)
+    status = db.Column(db.String(20), default='ATIVO', nullable=False)  # ATIVO, INATIVO
     data_movimento = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamentos
@@ -30,7 +31,7 @@ class MovimentoContas(db.Model):
         return f'<MovimentoContas {self.id}>'
     
     @classmethod
-    def criar_novo(cls, tipo, parcela_id, fornecedor_cliente_id, faturado_id, valor, classificacoes=None):
+    def criar_novo(cls, tipo, parcela_id, fornecedor_cliente_id, faturado_id, valor, classificacoes=None, status='ATIVO'):
         """
         Cria um novo movimento contábil no banco de dados
         """
@@ -39,15 +40,52 @@ class MovimentoContas(db.Model):
             parcela_id=parcela_id,
             fornecedor_cliente_id=fornecedor_cliente_id,
             faturado_id=faturado_id,
-            valor=valor
+            valor=valor,
+            status=status
         )
-        
+
         db.session.add(movimento)
-        
+
         # Adiciona as classificações ao movimento
         if classificacoes:
             for classificacao in classificacoes:
                 movimento.classificacoes.append(classificacao)
-        
+
         db.session.commit()
         return movimento
+
+    @classmethod
+    def listar_todos(cls, tipo=None, incluir_inativos=False):
+        """
+        Lista todos os movimentos, opcionalmente filtrados por tipo.
+        Por padrão, retorna apenas registros com status ATIVO.
+        """
+        query = cls.query
+        if not incluir_inativos:
+            query = query.filter_by(status='ATIVO')
+        if tipo is not None:
+            query = query.filter_by(tipo=tipo)
+        return query.order_by(cls.data_movimento.desc()).all()
+
+    def atualizar(self, **kwargs):
+        """
+        Atualiza os campos do movimento
+        """
+        for key, value in kwargs.items():
+            if hasattr(self, key) and key != 'classificacoes':
+                setattr(self, key, value)
+
+        # Tratar classificações separadamente
+        if 'classificacoes' in kwargs:
+            self.classificacoes = kwargs['classificacoes']
+
+        db.session.commit()
+        return self
+
+    def excluir_logico(self):
+        """
+        Realiza exclusão lógica, alterando o status para INATIVO
+        """
+        self.status = 'INATIVO'
+        db.session.commit()
+        return self

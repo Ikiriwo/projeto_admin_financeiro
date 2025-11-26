@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-cogs"></i> Configurações do Sistema
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <!-- Seção Google Gemini API -->
+                    <div class="config-section mb-4">
+                        <h4 class="border-bottom pb-2 mb-3">
+                            <i class="fas fa-robot text-primary"></i> Google Gemini API
+                        </h4>
+
+                        <!-- Formulário de Configuração -->
+                        <form id="apiKeyForm">
+                            <div class="mb-3">
+                                <label for="apiKey" class="form-label">
+                                    <i class="fas fa-key"></i> Chave API do Google Gemini
+                                </label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="apiKey"
+                                       placeholder="Cole sua chave API aqui (ex: AIzaSy...)"
+                                       required>
+                                <div class="form-text">
+                                    A chave será armazenada localmente no arquivo .env do servidor.
+                                </div>
+                            </div>
+
+                            <div id="alertContainer"></div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="saveBtn">
+                                    <i class="fas fa-save"></i> Salvar e Validar Chave
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Como obter a chave -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h5><i class="fas fa-info-circle text-info"></i> Como obter sua chave API</h5>
+                            <ol class="mb-0">
+                                <li>Acesse <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio <i class="fas fa-external-link-alt"></i></a></li>
+                                <li>Faça login com sua conta Google</li>
+                                <li>Clique em "Create API Key"</li>
+                                <li>Copie a chave gerada e cole acima</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Informações de Segurança -->
+                    <div class="alert alert-success">
+                        <h5><i class="fas fa-shield-alt"></i> Segurança</h5>
+                        <ul class="mb-0">
+                            <li>Todas as configurações são armazenadas localmente no arquivo <code>.env</code></li>
+                            <li>O arquivo <code>.env</code> está protegido no <code>.gitignore</code></li>
+                            <li>Suas chaves API nunca são compartilhadas ou enviadas para repositórios</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .config-section {
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+        padding: 1.5rem;
+    }
+    .btn-lg {
+        padding: 12px 30px;
+        font-size: 1.1rem;
+    }
+</style>
+
+<script>
+    // Submissão do formulário
+    $('#apiKeyForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const apiKey = $('#apiKey').val().trim();
+        const btn = $('#saveBtn');
+        const alertContainer = $('#alertContainer');
+
+        // Validação básica
+        if (apiKey.length < 20) {
+            showAlert('warning', '<i class="fas fa-exclamation-triangle"></i> A chave API parece muito curta. Verifique se copiou corretamente.');
+            return;
+        }
+
+        // Desabilitar botão
+        btn.prop('disabled', true);
+        btn.html('<span class="spinner-border spinner-border-sm me-2"></span> Validando...');
+
+        // Enviar para o servidor
+        $.ajax({
+            url: '/setup/validate',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ api_key: apiKey }),
+            success: function(response) {
+                if (response.success) {
+                    showAlert('success',
+                        '<i class="fas fa-check-circle"></i> <strong>Sucesso!</strong> ' +
+                        'Chave validada e salva. Redirecionando para a página inicial...'
+                    );
+                    setTimeout(function() {
+                        window.location.href = '/';
+                    }, 2000);
+                } else {
+                    showAlert('danger',
+                        '<i class="fas fa-times-circle"></i> <strong>Erro:</strong> ' +
+                        (response.error || 'Não foi possível validar a chave.')
+                    );
+                    btn.prop('disabled', false);
+                    btn.html('<i class="fas fa-save"></i> Salvar e Validar Chave');
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Erro ao conectar com o servidor.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                showAlert('danger',
+                    '<i class="fas fa-times-circle"></i> <strong>Erro:</strong> ' + errorMsg
+                );
+                btn.prop('disabled', false);
+                btn.html('<i class="fas fa-save"></i> Salvar e Validar Chave');
+            }
+        });
+    });
+
+    function showAlert(type, message) {
+        const alertHtml = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        `;
+        $('#alertContainer').html(alertHtml);
+    }
+</script>
+{% endblock %}

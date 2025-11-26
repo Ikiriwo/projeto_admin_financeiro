@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2>Manter Contas (Movimentos)</h2>
+                    <button class="btn btn-primary" onclick="abrirModalCriar()">
+                        <i class="fas fa-plus"></i> Novo Movimento
+                    </button>
+                </div>
+
+                <div class="card-body">
+                    <!-- Filtros de Busca -->
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <select id="filtroTipo" class="form-control">
+                                <option value="">Todos os Tipos</option>
+                                <option value="APAGAR">A Pagar</option>
+                                <option value="ARECEBER">A Receber</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="number" id="filtroIdMin" class="form-control" placeholder="ID Mínimo">
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-check mt-2">
+                                <input type="checkbox" class="form-check-input" id="incluirInativos">
+                                <label class="form-check-label" for="incluirInativos">Incluir Inativos</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <button class="btn btn-info" onclick="carregarMovimentos()">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
+                            <button class="btn btn-success" onclick="carregarTodos()">
+                                <i class="fas fa-list"></i> Todos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de Resultados -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm" id="tabelaMovimentos">
+                            <thead>
+                                <tr>
+                                    <th onclick="ordenarTabela(0)" style="cursor: pointer;">
+                                        ID <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th onclick="ordenarTabela(1)" style="cursor: pointer;">
+                                        Tipo <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th onclick="ordenarTabela(2)" style="cursor: pointer;">
+                                        Fornecedor/Cliente <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th onclick="ordenarTabela(3)" style="cursor: pointer;">
+                                        Faturado <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th onclick="ordenarTabela(4)" style="cursor: pointer;">
+                                        Valor <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th onclick="ordenarTabela(5)" style="cursor: pointer;">
+                                        Status <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th onclick="ordenarTabela(6)" style="cursor: pointer;">
+                                        Data Movimento <i class="fas fa-sort"></i>
+                                    </th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyMovimentos">
+                                <tr>
+                                    <td colspan="8" class="text-center text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        Clique em "Buscar" ou "Todos" para carregar os dados
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Contador de registros -->
+                    <div class="text-muted mt-2">
+                        <small id="contadorRegistros">0 registros encontrados</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Criar/Editar Movimento -->
+<div class="modal fade" id="modalMovimento" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitulo">Novo Movimento</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formMovimento">
+                    <input type="hidden" id="movimentoId">
+                    <input type="hidden" id="movimentoStatus" value="ATIVO">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="movimentoTipo">Tipo *</label>
+                                <select class="form-control" id="movimentoTipo" required>
+                                    <option value="">Selecione...</option>
+                                    <option value="APAGAR">A Pagar</option>
+                                    <option value="ARECEBER">A Receber</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="movimentoValor">Valor *</label>
+                                <input type="number" class="form-control" id="movimentoValor" step="0.01" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="movimentoFornecedorCliente">Fornecedor/Cliente *</label>
+                                <select class="form-control" id="movimentoFornecedorCliente" required>
+                                    <option value="">Carregando...</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="movimentoFaturado">Faturado *</label>
+                                <select class="form-control" id="movimentoFaturado" required>
+                                    <option value="">Carregando...</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Classificações</label>
+                        <div id="classificacoesCheckboxes">
+                            Carregando...
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="salvarMovimento()">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+    .table th:hover {
+        background-color: #e9ecef;
+    }
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    .badge {
+        font-size: 0.85em;
+    }
+    #classificacoesCheckboxes {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        border-radius: 5px;
+    }
+</style>
+
+<script src="{{ url_for('static', filename='js/contas.js') }}"></script>
+{% endblock %}

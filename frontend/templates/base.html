@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title if title else "Sistema Financeiro" }}</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -18,9 +24,25 @@
                     <span class="nav-icon">📄</span>
                     <span class="nav-text">Upload</span>
                 </a>
+                <a href="{{ url_for('web.pessoas') }}" class="nav-link {% if request.endpoint == 'web.pessoas' %}active{% endif %}">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-text">Pessoas</span>
+                </a>
+                <a href="{{ url_for('web.classificacoes') }}" class="nav-link {% if request.endpoint == 'web.classificacoes' %}active{% endif %}">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Classificações</span>
+                </a>
+                <a href="{{ url_for('web.contas') }}" class="nav-link {% if request.endpoint == 'web.contas' %}active{% endif %}">
+                    <span class="nav-icon">💰</span>
+                    <span class="nav-text">Contas</span>
+                </a>
                 <a href="{{ url_for('web.rag_interface') }}" class="nav-link {% if request.endpoint == 'web.rag_interface' %}active{% endif %}">
                     <span class="nav-icon">🤖</span>
                     <span class="nav-text">RAG</span>
+                </a>
+                <a href="{{ url_for('setup.configuracoes_page') }}" class="nav-link {% if request.endpoint == 'setup.configuracoes_page' %}active{% endif %}">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Configurações</span>
                 </a>
             </nav>
         </div>
@@ -35,6 +57,12 @@
             <p>&copy; 2025 - Projeto Acadêmico N2</p>
         </div>
     </footer>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/validacao.js') }}"></script>
 </body>

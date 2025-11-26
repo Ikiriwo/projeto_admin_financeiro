@@ -6,7 +6,7 @@
             <h2>Upload de Nota Fiscal</h2>
             <p class="subtitle">Sistema de Extração de Dados</p>
         </div>
-        
+
         <div class="card-body">
             <div class="upload-icon">
                 <i class="icon-upload"></i>
@@ -40,6 +40,13 @@
         
         <div class="card-footer">
             <p>Formatos suportados: PDF</p>
+            <p class="text-muted mb-0">
+                <small>
+                    <i class="fas fa-info-circle"></i>
+                    Certifique-se de configurar a chave API do Gemini em
+                    <a href="{{ url_for('setup.configuracoes_page') }}">Configurações</a>
+                </small>
+            </p>
         </div>
     </div>
 </div>

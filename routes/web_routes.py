@@ -93,6 +93,24 @@ def rag_interface():
     return render_template('rag.html', title="Consulta Inteligente - RAG")
 
 
+@web_bp.route('/pessoas')
+def pessoas():
+    """Página para gerenciar pessoas (Fornecedores, Clientes, Faturados)."""
+    return render_template('pessoas.html', title="Manter Pessoas")
+
+
+@web_bp.route('/classificacoes')
+def classificacoes():
+    """Página para gerenciar classificações (Receitas e Despesas)."""
+    return render_template('classificacoes.html', title="Manter Classificações")
+
+
+@web_bp.route('/contas')
+def contas():
+    """Página para gerenciar movimentos de contas (A Pagar/A Receber)."""
+    return render_template('contas.html', title="Manter Contas")
+
+
 @web_bp.route('/processar', methods=['POST'])
 def processar():
     """Processa o PDF da nota fiscal e extrai os dados."""

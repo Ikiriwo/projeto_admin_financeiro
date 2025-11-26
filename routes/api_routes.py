@@ -399,3 +399,597 @@ def rag_index_nota(nota_id):
             'success': False,
             'error': f'Erro ao indexar nota fiscal: {str(e)}'
         }), 500
+
+
+# ==================== ROTAS CRUD PARA PESSOAS ====================
+
+@api_bp.route('/pessoas', methods=['GET'])
+def listar_pessoas():
+    """
+    Lista todas as pessoas (filtro opcional por tipo).
+    Query params: tipo (FORNECEDOR, CLIENTE, FATURADO), incluir_inativos (true/false)
+    """
+    try:
+        tipo = request.args.get('tipo')
+        incluir_inativos = request.args.get('incluir_inativos', 'false').lower() == 'true'
+
+        pessoas = Pessoas.listar_todos(tipo=tipo, incluir_inativos=incluir_inativos)
+
+        return jsonify({
+            'success': True,
+            'data': [{
+                'id': p.id,
+                'tipo': p.tipo,
+                'razao_social': p.razao_social,
+                'cpf_cnpj': p.cpf_cnpj,
+                'status': p.status,
+                'data_cadastro': p.data_cadastro.isoformat() if p.data_cadastro else None
+            } for p in pessoas]
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao listar pessoas: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/pessoas/<int:pessoa_id>', methods=['GET'])
+def obter_pessoa(pessoa_id):
+    """
+    Obtém uma pessoa específica por ID.
+    """
+    try:
+        pessoa = Pessoas.query.get(pessoa_id)
+        if not pessoa:
+            return jsonify({
+                'success': False,
+                'error': 'Pessoa não encontrada'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': pessoa.id,
+                'tipo': pessoa.tipo,
+                'razao_social': pessoa.razao_social,
+                'cpf_cnpj': pessoa.cpf_cnpj,
+                'status': pessoa.status,
+                'data_cadastro': pessoa.data_cadastro.isoformat() if pessoa.data_cadastro else None
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao obter pessoa: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/pessoas', methods=['POST'])
+def criar_pessoa():
+    """
+    Cria uma nova pessoa.
+    Body: { tipo, razao_social, cpf_cnpj }
+    """
+    try:
+        data = request.json
+
+        # Validar campos obrigatórios
+        if not data.get('tipo') or not data.get('razao_social') or not data.get('cpf_cnpj'):
+            return jsonify({
+                'success': False,
+                'error': 'Campos obrigatórios: tipo, razao_social, cpf_cnpj'
+            }), 400
+
+        # Verificar se já existe
+        existe = Pessoas.verificar_existencia(cpf_cnpj=data['cpf_cnpj'], incluir_inativos=True)
+        if existe:
+            return jsonify({
+                'success': False,
+                'error': 'Pessoa já cadastrada com este CPF/CNPJ'
+            }), 400
+
+        pessoa = Pessoas.criar_novo(
+            tipo=data['tipo'],
+            razao_social=data['razao_social'],
+            cpf_cnpj=data['cpf_cnpj']
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Pessoa criada com sucesso',
+            'data': {
+                'id': pessoa.id,
+                'tipo': pessoa.tipo,
+                'razao_social': pessoa.razao_social,
+                'cpf_cnpj': pessoa.cpf_cnpj,
+                'status': pessoa.status
+            }
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao criar pessoa: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/pessoas/<int:pessoa_id>', methods=['PUT'])
+def atualizar_pessoa(pessoa_id):
+    """
+    Atualiza uma pessoa existente.
+    Body: { tipo, razao_social, cpf_cnpj } (campos opcionais)
+    """
+    try:
+        pessoa = Pessoas.query.get(pessoa_id)
+        if not pessoa:
+            return jsonify({
+                'success': False,
+                'error': 'Pessoa não encontrada'
+            }), 404
+
+        data = request.json
+        campos_atualizaveis = {}
+
+        if 'tipo' in data:
+            campos_atualizaveis['tipo'] = data['tipo']
+        if 'razao_social' in data:
+            campos_atualizaveis['razao_social'] = data['razao_social']
+        if 'cpf_cnpj' in data:
+            # Verificar se o novo CPF/CNPJ já existe em outra pessoa
+            existe = Pessoas.query.filter(
+                Pessoas.cpf_cnpj == data['cpf_cnpj'],
+                Pessoas.id != pessoa_id
+            ).first()
+            if existe:
+                return jsonify({
+                    'success': False,
+                    'error': 'CPF/CNPJ já cadastrado para outra pessoa'
+                }), 400
+            campos_atualizaveis['cpf_cnpj'] = data['cpf_cnpj']
+
+        pessoa.atualizar(**campos_atualizaveis)
+
+        return jsonify({
+            'success': True,
+            'message': 'Pessoa atualizada com sucesso',
+            'data': {
+                'id': pessoa.id,
+                'tipo': pessoa.tipo,
+                'razao_social': pessoa.razao_social,
+                'cpf_cnpj': pessoa.cpf_cnpj,
+                'status': pessoa.status
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao atualizar pessoa: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/pessoas/<int:pessoa_id>', methods=['DELETE'])
+def excluir_pessoa(pessoa_id):
+    """
+    Realiza exclusão lógica de uma pessoa (altera status para INATIVO).
+    """
+    try:
+        pessoa = Pessoas.query.get(pessoa_id)
+        if not pessoa:
+            return jsonify({
+                'success': False,
+                'error': 'Pessoa não encontrada'
+            }), 404
+
+        pessoa.excluir_logico()
+
+        return jsonify({
+            'success': True,
+            'message': 'Pessoa excluída com sucesso (exclusão lógica)'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao excluir pessoa: {str(e)}'
+        }), 500
+
+
+# ==================== ROTAS CRUD PARA CLASSIFICAÇÕES ====================
+
+@api_bp.route('/classificacoes', methods=['GET'])
+def listar_classificacoes():
+    """
+    Lista todas as classificações (filtro opcional por tipo).
+    Query params: tipo (RECEITA, DESPESA), incluir_inativos (true/false)
+    """
+    try:
+        tipo = request.args.get('tipo')
+        incluir_inativos = request.args.get('incluir_inativos', 'false').lower() == 'true'
+
+        classificacoes = Classificacao.listar_todos(tipo=tipo, incluir_inativos=incluir_inativos)
+
+        return jsonify({
+            'success': True,
+            'data': [{
+                'id': c.id,
+                'tipo': c.tipo,
+                'descricao': c.descricao,
+                'status': c.status,
+                'data_cadastro': c.data_cadastro.isoformat() if c.data_cadastro else None
+            } for c in classificacoes]
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao listar classificações: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/classificacoes/<int:classificacao_id>', methods=['GET'])
+def obter_classificacao(classificacao_id):
+    """
+    Obtém uma classificação específica por ID.
+    """
+    try:
+        classificacao = Classificacao.query.get(classificacao_id)
+        if not classificacao:
+            return jsonify({
+                'success': False,
+                'error': 'Classificação não encontrada'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': classificacao.id,
+                'tipo': classificacao.tipo,
+                'descricao': classificacao.descricao,
+                'status': classificacao.status,
+                'data_cadastro': classificacao.data_cadastro.isoformat() if classificacao.data_cadastro else None
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao obter classificação: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/classificacoes', methods=['POST'])
+def criar_classificacao():
+    """
+    Cria uma nova classificação.
+    Body: { tipo, descricao }
+    """
+    try:
+        data = request.json
+
+        # Validar campos obrigatórios
+        if not data.get('tipo') or not data.get('descricao'):
+            return jsonify({
+                'success': False,
+                'error': 'Campos obrigatórios: tipo, descricao'
+            }), 400
+
+        # Verificar se já existe
+        existe = Classificacao.verificar_existencia(
+            tipo=data['tipo'],
+            descricao=data['descricao'],
+            incluir_inativos=True
+        )
+        if existe:
+            return jsonify({
+                'success': False,
+                'error': 'Classificação já cadastrada com este tipo e descrição'
+            }), 400
+
+        classificacao = Classificacao.criar_nova(
+            tipo=data['tipo'],
+            descricao=data['descricao']
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Classificação criada com sucesso',
+            'data': {
+                'id': classificacao.id,
+                'tipo': classificacao.tipo,
+                'descricao': classificacao.descricao,
+                'status': classificacao.status
+            }
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao criar classificação: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/classificacoes/<int:classificacao_id>', methods=['PUT'])
+def atualizar_classificacao(classificacao_id):
+    """
+    Atualiza uma classificação existente.
+    Body: { tipo, descricao } (campos opcionais)
+    """
+    try:
+        classificacao = Classificacao.query.get(classificacao_id)
+        if not classificacao:
+            return jsonify({
+                'success': False,
+                'error': 'Classificação não encontrada'
+            }), 404
+
+        data = request.json
+        campos_atualizaveis = {}
+
+        if 'tipo' in data:
+            campos_atualizaveis['tipo'] = data['tipo']
+        if 'descricao' in data:
+            campos_atualizaveis['descricao'] = data['descricao']
+
+        # Verificar duplicação se tipo ou descrição foram alterados
+        if 'tipo' in data or 'descricao' in data:
+            novo_tipo = data.get('tipo', classificacao.tipo)
+            nova_descricao = data.get('descricao', classificacao.descricao)
+
+            existe = Classificacao.query.filter(
+                Classificacao.tipo == novo_tipo,
+                Classificacao.descricao == nova_descricao,
+                Classificacao.id != classificacao_id
+            ).first()
+            if existe:
+                return jsonify({
+                    'success': False,
+                    'error': 'Já existe uma classificação com este tipo e descrição'
+                }), 400
+
+        classificacao.atualizar(**campos_atualizaveis)
+
+        return jsonify({
+            'success': True,
+            'message': 'Classificação atualizada com sucesso',
+            'data': {
+                'id': classificacao.id,
+                'tipo': classificacao.tipo,
+                'descricao': classificacao.descricao,
+                'status': classificacao.status
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao atualizar classificação: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/classificacoes/<int:classificacao_id>', methods=['DELETE'])
+def excluir_classificacao(classificacao_id):
+    """
+    Realiza exclusão lógica de uma classificação (altera status para INATIVO).
+    """
+    try:
+        classificacao = Classificacao.query.get(classificacao_id)
+        if not classificacao:
+            return jsonify({
+                'success': False,
+                'error': 'Classificação não encontrada'
+            }), 404
+
+        classificacao.excluir_logico()
+
+        return jsonify({
+            'success': True,
+            'message': 'Classificação excluída com sucesso (exclusão lógica)'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao excluir classificação: {str(e)}'
+        }), 500
+
+
+# ==================== ROTAS CRUD PARA MOVIMENTO CONTAS ====================
+
+@api_bp.route('/movimentos', methods=['GET'])
+def listar_movimentos():
+    """
+    Lista todos os movimentos contábeis (filtro opcional por tipo).
+    Query params: tipo (APAGAR, ARECEBER), incluir_inativos (true/false)
+    """
+    try:
+        tipo = request.args.get('tipo')
+        incluir_inativos = request.args.get('incluir_inativos', 'false').lower() == 'true'
+
+        movimentos = MovimentoContas.listar_todos(tipo=tipo, incluir_inativos=incluir_inativos)
+
+        return jsonify({
+            'success': True,
+            'data': [{
+                'id': m.id,
+                'tipo': m.tipo,
+                'parcela_id': m.parcela_id,
+                'fornecedor_cliente_id': m.fornecedor_cliente_id,
+                'fornecedor_cliente_nome': m.fornecedor_cliente.razao_social if m.fornecedor_cliente else None,
+                'faturado_id': m.faturado_id,
+                'faturado_nome': m.faturado.razao_social if m.faturado else None,
+                'valor': m.valor,
+                'status': m.status,
+                'data_movimento': m.data_movimento.isoformat() if m.data_movimento else None,
+                'classificacoes': [{'id': c.id, 'descricao': c.descricao, 'tipo': c.tipo} for c in m.classificacoes]
+            } for m in movimentos]
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao listar movimentos: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/movimentos/<int:movimento_id>', methods=['GET'])
+def obter_movimento(movimento_id):
+    """
+    Obtém um movimento específico por ID.
+    """
+    try:
+        movimento = MovimentoContas.query.get(movimento_id)
+        if not movimento:
+            return jsonify({
+                'success': False,
+                'error': 'Movimento não encontrado'
+            }), 404
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': movimento.id,
+                'tipo': movimento.tipo,
+                'parcela_id': movimento.parcela_id,
+                'fornecedor_cliente_id': movimento.fornecedor_cliente_id,
+                'fornecedor_cliente_nome': movimento.fornecedor_cliente.razao_social if movimento.fornecedor_cliente else None,
+                'faturado_id': movimento.faturado_id,
+                'faturado_nome': movimento.faturado.razao_social if movimento.faturado else None,
+                'valor': movimento.valor,
+                'status': movimento.status,
+                'data_movimento': movimento.data_movimento.isoformat() if movimento.data_movimento else None,
+                'classificacoes': [{'id': c.id, 'descricao': c.descricao, 'tipo': c.tipo} for c in movimento.classificacoes]
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao obter movimento: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/movimentos', methods=['POST'])
+def criar_movimento():
+    """
+    Cria um novo movimento contábil.
+    Body: { tipo, parcela_id, fornecedor_cliente_id, faturado_id, valor, classificacao_ids[] }
+    """
+    try:
+        data = request.json
+
+        # Validar campos obrigatórios
+        required_fields = ['tipo', 'fornecedor_cliente_id', 'faturado_id', 'valor']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({
+                    'success': False,
+                    'error': f'Campo obrigatório ausente: {field}'
+                }), 400
+
+        # Obter classificações se fornecidas
+        classificacoes = []
+        if 'classificacao_ids' in data and data['classificacao_ids']:
+            classificacoes = Classificacao.query.filter(
+                Classificacao.id.in_(data['classificacao_ids'])
+            ).all()
+
+        movimento = MovimentoContas.criar_novo(
+            tipo=data['tipo'],
+            parcela_id=data.get('parcela_id'),
+            fornecedor_cliente_id=data['fornecedor_cliente_id'],
+            faturado_id=data['faturado_id'],
+            valor=float(data['valor']),
+            classificacoes=classificacoes
+        )
+
+        return jsonify({
+            'success': True,
+            'message': 'Movimento criado com sucesso',
+            'data': {
+                'id': movimento.id,
+                'tipo': movimento.tipo,
+                'valor': movimento.valor,
+                'status': movimento.status
+            }
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao criar movimento: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/movimentos/<int:movimento_id>', methods=['PUT'])
+def atualizar_movimento(movimento_id):
+    """
+    Atualiza um movimento existente.
+    Body: { tipo, fornecedor_cliente_id, faturado_id, valor, classificacao_ids[] } (campos opcionais)
+    """
+    try:
+        movimento = MovimentoContas.query.get(movimento_id)
+        if not movimento:
+            return jsonify({
+                'success': False,
+                'error': 'Movimento não encontrado'
+            }), 404
+
+        data = request.json
+        campos_atualizaveis = {}
+
+        if 'tipo' in data:
+            campos_atualizaveis['tipo'] = data['tipo']
+        if 'fornecedor_cliente_id' in data:
+            campos_atualizaveis['fornecedor_cliente_id'] = data['fornecedor_cliente_id']
+        if 'faturado_id' in data:
+            campos_atualizaveis['faturado_id'] = data['faturado_id']
+        if 'valor' in data:
+            campos_atualizaveis['valor'] = float(data['valor'])
+        if 'classificacao_ids' in data:
+            classificacoes = Classificacao.query.filter(
+                Classificacao.id.in_(data['classificacao_ids'])
+            ).all()
+            campos_atualizaveis['classificacoes'] = classificacoes
+
+        movimento.atualizar(**campos_atualizaveis)
+
+        return jsonify({
+            'success': True,
+            'message': 'Movimento atualizado com sucesso',
+            'data': {
+                'id': movimento.id,
+                'tipo': movimento.tipo,
+                'valor': movimento.valor,
+                'status': movimento.status
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao atualizar movimento: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/movimentos/<int:movimento_id>', methods=['DELETE'])
+def excluir_movimento(movimento_id):
+    """
+    Realiza exclusão lógica de um movimento (altera status para INATIVO).
+    """
+    try:
+        movimento = MovimentoContas.query.get(movimento_id)
+        if not movimento:
+            return jsonify({
+                'success': False,
+                'error': 'Movimento não encontrado'
+            }), 404
+
+        movimento.excluir_logico()
+
+        return jsonify({
+            'success': True,
+            'message': 'Movimento excluído com sucesso (exclusão lógica)'
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'error': f'Erro ao excluir movimento: {str(e)}'
+        }), 500
