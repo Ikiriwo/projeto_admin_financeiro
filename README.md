@@ -241,4 +241,4 @@ Este sistema foi desenvolvido como projeto acadêmico N2, implementando:
 
 **Projeto Acadêmico N2** - Sistema Administrativo-Financeiro
 
-**🚀 Pronto para deploy!**
+**Pronto para deploy!**
